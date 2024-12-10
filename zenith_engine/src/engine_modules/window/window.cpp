@@ -12,14 +12,15 @@
 namespace Zenith {
 
 void windowEventsSys(ECS::ResourceQuery<GameState> gs_state, ECS::ResourceQuery<Keys> keys_query);
-void windowSwapSys(ECS::ComponentQuery<Window> window_query);
+void windowSwapSys(ECS::ResourceQuery<Window> window_query);
 
-WindowModule::WindowModule() {
+WindowModule::WindowModule(const char* title, i32 width, i32 height) {
   ECS *ecs = ECS::get();
+
 
   ecs->enableModule<InputModule>();
 
-  ecs->registerComponent<Window>();
+  ecs->addResource(Window(title, width, height));
   ecs->addSystem(0, windowEventsSys);
   ecs->addSystem(127, windowSwapSys);
 }
@@ -29,6 +30,7 @@ void windowEventsSys(ECS::ResourceQuery<GameState> gs_state, ECS::ResourceQuery<
   
   GameState *gs = gs_state.get();
   Keys* keys = keys_query.get();
+
 
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
@@ -51,12 +53,9 @@ void windowEventsSys(ECS::ResourceQuery<GameState> gs_state, ECS::ResourceQuery<
   }
 }
 
-void windowSwapSys(ECS::ComponentQuery<Window> window_query) {
-  for (auto t : window_query.components) {
-    Window *window = t.get<0>();
-
+void windowSwapSys(ECS::ResourceQuery<Window> window_query) { 
+    Window *window = window_query.get();
     SDL_GL_SwapWindow(window->getWindow());
-  }
 }
 
 Window::Window(const char *title, i32 width, i32 height) {
@@ -71,6 +70,9 @@ Window::Window(const char *title, i32 width, i32 height) {
     Logger::error("Error creating gl context '{}'", SDL_GetError());
     return;
   }
+
+  this->title = title;
+
 }
 
 SDL_Window *Window::getWindow() { return window; }

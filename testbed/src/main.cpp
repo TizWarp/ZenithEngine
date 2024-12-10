@@ -12,8 +12,12 @@ using namespace Zenith;
 
 void Zenith::z_main(){
 
+  ECS* ecs = ECS::get();
 
 
 
+  ecs->enableModule<WindowModule>("TEST");
+
+  /*ecs->addSystem(1, test_sys);*/
 
 }

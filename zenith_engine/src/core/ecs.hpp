@@ -1,11 +1,9 @@
 #pragma once
 
 #include "defines.hpp"
-#include "spdlog/common.h"
-#include "spdlog/spdlog.h"
 #include <cstddef>
 #include <cstdio>
-#include <filesystem>
+#include <cstdlib>
 #include <fmt/base.h>
 #include <functional>
 #include <tuple>
@@ -142,8 +140,7 @@ public:
     std::vector<Entity> entities;
   };
 
-  template <typename... Qs>
-  void addSystem(u8 priority, void (*cb_ptr)(Qs...)) {
+  template <typename... Qs> void addSystem(u8 priority, void (*cb_ptr)(Qs...)) {
     systems[priority].push_back(new System<Qs...>(std::function(cb_ptr)));
   }
 
@@ -151,7 +148,7 @@ public:
     if (getResource<R>() != nullptr) {
       return;
     }
-    resources.push_back(new Resource(resource));
+    resources.push_back(new Resource(std::move(resource)));
   }
 
   template <typename R> class ResourceQuery {
@@ -170,13 +167,13 @@ public:
   void runStartupSystems();
 
   class IModule {
-    public:
+  public:
     virtual ~IModule() {};
   };
 
-  template <class M> void enableModule() {
-    if (!isModuleEnabled<M>()){
-      enabled_modules.push_back(new M());
+  template <class M, typename... Args> void enableModule(Args... args) {
+    if (!isModuleEnabled<M>()) {
+      enabled_modules.push_back(new M(args...));
     }
   }
 
@@ -205,7 +202,12 @@ private:
   public:
     System(SystemCallback<Qs...> callback) { this->callback = callback; }
 
-    void call() override { callback(Qs()...); }
+    void call() override { 
+    
+      /*printf("Calling system callback\n");*/
+      callback(Qs()...);
+      /*printf("Yes\n");*/
+    }
 
   private:
     SystemCallback<Qs...> callback;
@@ -218,7 +220,7 @@ private:
 
   template <typename R> class Resource : public IResource {
   public:
-    Resource(R resource) { this->resource = resource; }
+    Resource(R resource) { this->resource = std::move(resource); }
 
     R *get() { return &resource; }
 

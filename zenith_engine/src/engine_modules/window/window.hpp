@@ -12,9 +12,11 @@ namespace Zenith{
   
       i32 x;
       i32 y;
+      const char* title;
 
+      Window(const char* title, i32 width, i32 height);
+      Window() {};
 
-      Window(const char* title = "ZenithEngine", i32 width = 600, i32 height = 400);
       SDL_Window* getWindow();
 
       private:
@@ -25,7 +27,7 @@ namespace Zenith{
 
   class WindowModule : public ECS::IModule{
     public:
-    WindowModule();
+    WindowModule(const char* title = "Zenith", i32 width = 600, i32 height = 400);
   };
 
 

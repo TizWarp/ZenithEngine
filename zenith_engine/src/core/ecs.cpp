@@ -1,5 +1,7 @@
 #include "ecs.hpp"
+#include <cstdio>
 #include <cstdlib>
+#include <fmt/base.h>
 
 namespace Zenith {
 
@@ -25,7 +27,6 @@ Entity ECS::createEntity() {
 void ECS::update() {
 
   for (std::vector<ISystem *> sys_vec : systems) {
-
     for (ECS::ISystem *sys : sys_vec) {
       sys->call();
     }

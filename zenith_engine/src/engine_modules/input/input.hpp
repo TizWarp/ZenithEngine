@@ -1,6 +1,7 @@
 #pragma once
 #include "../../core/ecs.hpp"
 #include <algorithm>
+#include <cstdio>
 #include <map>
 #include <string>
 
@@ -11,6 +12,7 @@ class Keys;
 
 class Keys {
 public:
+
   void keyDown(std::string key);
   void keyUp(std::string key);
 
