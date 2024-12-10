@@ -3,11 +3,13 @@
 #include "core/entry.hpp"
 #include <spdlog/spdlog.h>
 #include <glm/glm.hpp>
-extern void setupGame(Zenith::GameInfo &game_info);
+#include "core/ecs.hpp"
 
 namespace Zenith{
   namespace Logger = spdlog;
   namespace Math = glm;
+  extern void z_main();
+
 }
 
 

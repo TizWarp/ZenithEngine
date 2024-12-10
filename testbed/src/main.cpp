@@ -1,27 +1,19 @@
-#include <core/ecs.hpp>
-#include <core/entry.hpp>
+#include "core/entry.hpp"
+#include "engine_modules/input/input.hpp"
+#include "engine_modules/window/window.hpp"
 #include <cstdio>
+#include <fmt/base.h>
 #include <zenith.hpp>
+#include<core/ecs.hpp>
+
 
 using namespace Zenith;
 
 
-struct Position{
-  int x;
-  int y;
-};
-
-void test_sys(ECS::ComponentQuery<Position> query){
-  Logger::info("TEST");
-}
+void Zenith::z_main(){
 
 
-void setupGame(Zenith::GameInfo &game_info) {
-  game_info.game_name = "Testbed";
-  game_info.clear_color = Math::vec4(0.5f, 0.5f, 0.5f, 1.0f);
 
 
-  ECS::registerComponent<Position>();
-  ECS::addSystem(test_sys);
 
 }

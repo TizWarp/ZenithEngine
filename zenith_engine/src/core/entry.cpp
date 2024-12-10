@@ -1,80 +1,37 @@
 #include "entry.hpp"
-#include "events.hpp"
-#include "window.hpp"
+#include "ecs.hpp"
 #include "../zenith.hpp"
-#include <GL/glew.h>
-#include <SDL3/SDL_error.h>
+#include "SDL3/SDL.h"
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
-#include <cmath>
-#include <spdlog/spdlog.h>
-#include "ecs.hpp"
+#include <cstdio>
+#include <SDL3_image/SDL_image.h>
+
 
 using namespace Zenith;
 
-namespace Zenith {
-static bool running = true;
+bool running = true;
+
+
+
+void gamestateSys(ECS::ResourceQuery<GameState> querry){
+  GameState *game_state = querry.get();
+  running = game_state->running;
 }
 
-bool initSdl() {
-  if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS)) {
-    Logger::error("Error initializing SDL3 '{}'", SDL_GetError());
-    return false;
+
+
+int main(){
+
+
+  Zenith::z_main();
+
+  ECS::get()->addResource(GameState{true});
+  ECS::get()->addSystem(127, gamestateSys);
+
+  while(running){
+    ECS::get()->update();
   }
 
-  return true;
-}
 
-bool initGlew() {
-
-  glewExperimental = true;
-  GLenum glewError = glewInit();
-  if (glewError != GLEW_OK) {
-    /*Logger::error("Failed to init glew '{}'", glewGetErrorString(glewError));*/
-    return false;
-  }
-
-  return true;
-}
-
-bool quitCallback(Events::EventContext &ctx){
-
-  running = false;
-
-  return true;
-}
-
-int main() {
-
-  setupGame(Zenith::gameInfo);
-  Logger::info("Setup game");
-
-  if (!initSdl()) {
-    return -1;
-  }
-
-  if (!Window::createWindow(gameInfo.game_name, 600, 400)) {
-    return -1;
-  }
-
-  if (!initGlew()) {
-    return -1;
-  }
-
-  Events::addListener(Events::QUIT, (Events::Listener)0, quitCallback);
-
-  while (running) {
-    Window::pollEvents();
-
-    ECS::ecsUpdate();
-
-    glClearColor(gameInfo.clear_color.r, gameInfo.clear_color.g, gameInfo.clear_color.b, gameInfo.clear_color.a);
-    glClear(GL_COLOR_BUFFER_BIT);
-    
-
-    SDL_GL_SwapWindow(Window::getWindow());
-
-  }
-
-  return 0;
 }
