@@ -6,6 +6,7 @@
 #include "core/ecs.hpp"
 
 namespace Zenith{
+
   namespace Logger = spdlog;
   namespace Math = glm;
   extern void z_main();

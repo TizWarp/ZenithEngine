@@ -29,8 +29,13 @@ int main(){
   ECS::get()->addResource(GameState{true});
   ECS::get()->addSystem(127, gamestateSys);
 
+
+  unsigned int i = 0;
+
   while(running){
+    i += 1;
     ECS::get()->update();
+    /*printf("Frame %d\n", i);*/
   }
 
 

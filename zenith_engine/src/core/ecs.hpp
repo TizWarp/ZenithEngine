@@ -26,12 +26,16 @@ public:
     return getEntityIndex(entity) != -1;
   }
 
+  unsigned int size(){
+    return components.size();
+  }
+
   void addEntityComponent(Entity entity, C component) {
     if (!hasEntity(entity)) {
       components.push_back(component);
       entities.push_back(entity);
     }
-    printf("%zu \n", components.size());
+    /*printf("%zu \n", components.size());*/
   }
 
   void removeEntityComponent(Entity entity) override {
@@ -80,7 +84,7 @@ public:
 
   template <typename C> bool hasComponent(Entity entity) {
     if (ComponentPool<C> *pool = getComponentPool<C>()) {
-      /*printf("%b \n", pool->has;Entity(entity));*/
+      /*printf("%b \n", pool->hasEntity(entity));*/
       return pool->hasEntity(entity);
     }
     return false;
@@ -101,7 +105,9 @@ public:
   template <typename C> void addEntityComponent(Entity entity, C component) {
     if (ComponentPool<C> *pool = getComponentPool<C>()) {
       pool->addEntityComponent(entity, std::move(component));
+      /*printf("Added component to entity size is %zu\n", pool->size());*/
     }
+    update_queries_flag = true;
   }
 
   template <typename C> void removeEntityComponent(Entity entity) {
@@ -129,9 +135,17 @@ public:
     std::tuple<Cs *...> tuple;
   };
 
-  template <typename... Cs> class ComponentQuery {
+  class Query {
   public:
-    ComponentQuery() {
+    virtual ~Query() {};
+    virtual void init() = 0;
+  };
+
+  template <typename... Cs> class ComponentQuery : public Query {
+  public:
+    ComponentQuery() { init(); }
+
+    void init() override {
       components = ECS::get()->queryComponents<Cs...>();
       entities = ECS::get()->queryEntities<Cs...>();
     }
@@ -151,10 +165,14 @@ public:
     resources.push_back(new Resource(std::move(resource)));
   }
 
-  template <typename R> class ResourceQuery {
+  template <typename R> class ResourceQuery : public Query {
 
   public:
-    ResourceQuery() { resource = ECS::get()->getResource<R>()->get(); }
+    ResourceQuery() {
+      init();
+    }
+
+    void init() override { resource = ECS::get()->getResource<R>()->get(); }
 
     R *get() { return resource; }
 
@@ -190,6 +208,14 @@ private:
   ECS() {};
   ~ECS() {};
 
+
+  void updateQueryCache(){
+    for (Query* query : query_cache){
+      query->init();
+    }
+  }
+
+
   template <typename... Qs> using SystemCallback = std::function<void(Qs...)>;
 
   class ISystem {
@@ -198,16 +224,21 @@ private:
     virtual void call() = 0;
   };
 
+  template <class Qs> Qs getQuery() {
+    for (Query *query_ptr : query_cache) {
+      if (Qs *qs = dynamic_cast<Qs *>(query_ptr)) {
+        return *qs;
+      }
+    }
+    query_cache.push_back(new Qs());
+    return Qs();
+  }
+
   template <typename... Qs> class System : public ISystem {
   public:
     System(SystemCallback<Qs...> callback) { this->callback = callback; }
 
-    void call() override { 
-    
-      /*printf("Calling system callback\n");*/
-      callback(Qs()...);
-      /*printf("Yes\n");*/
-    }
+    void call() override { callback(ECS::get()->getQuery<Qs>()...); }
 
   private:
     SystemCallback<Qs...> callback;
@@ -240,10 +271,10 @@ private:
   template <typename... Cs>
   std::vector<ComponentTuple<Cs...>> queryComponents() {
     std::vector<ComponentTuple<Cs...>> result_vec = {};
-
+    /*printf("Running query components\n");*/
     for (Entity entity = 0; entity <= ECS::entity_counter; entity++) {
       if (hasAllComponents<Cs...>(entity)) {
-        /*spdlog::info("Found matching entity");*/
+        /*printf("Found matching entity\n");*/
         ComponentTuple<Cs...> tuple = ComponentTuple(
             getComponentPool<Cs>()->getEntityComponent(entity)...);
         result_vec.push_back(tuple);
@@ -282,6 +313,8 @@ private:
   std::vector<ISystem *> systems[128];
   std::vector<IResource *> resources;
   std::vector<IModule *> enabled_modules;
+  std::vector<Query *> query_cache;
+  bool update_queries_flag = false;
 
   static ECS instance;
 };

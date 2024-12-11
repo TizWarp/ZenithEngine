@@ -31,7 +31,6 @@ void windowEventsSys(ECS::ResourceQuery<GameState> gs_state, ECS::ResourceQuery<
   GameState *gs = gs_state.get();
   Keys* keys = keys_query.get();
 
-
   while (SDL_PollEvent(&event)) {
     switch (event.type) {
     case SDL_EVENT_QUIT:
