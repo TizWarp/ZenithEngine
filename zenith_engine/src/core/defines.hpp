@@ -1,6 +1,9 @@
 #pragma once
 
+#include <spdlog/spdlog.h>
 #include <cstdint>
+#include <glm/glm.hpp>
+
 
 namespace Zenith{
   typedef uint64_t u64;
@@ -11,4 +14,9 @@ namespace Zenith{
   typedef int16_t i16;
   typedef uint8_t u8;
   typedef int8_t i8;
+
+
+  namespace Logger = spdlog;
+  using namespace glm; 
+
 }

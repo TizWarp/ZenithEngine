@@ -6,6 +6,8 @@
 #include <cstdlib>
 #include <fmt/base.h>
 #include <functional>
+#include <memory>
+#include <shared_mutex>
 #include <tuple>
 #include <vector>
 namespace Zenith {
@@ -26,9 +28,7 @@ public:
     return getEntityIndex(entity) != -1;
   }
 
-  unsigned int size(){
-    return components.size();
-  }
+  unsigned int size() { return components.size(); }
 
   void addEntityComponent(Entity entity, C component) {
     if (!hasEntity(entity)) {
@@ -99,7 +99,7 @@ public:
       return;
     }
 
-    component_pools.push_back(new ComponentPool<C>());
+    component_pools.push_back(std::make_unique<ComponentPool<C>>());
   }
 
   template <typename C> void addEntityComponent(Entity entity, C component) {
@@ -154,23 +154,22 @@ public:
     std::vector<Entity> entities;
   };
 
-  template <typename... Qs> void addSystem(u8 priority, void (*cb_ptr)(Qs...)) {
-    systems[priority].push_back(new System<Qs...>(std::function(cb_ptr)));
+  template <typename... Qs> void addSystem(void (*cb_ptr)(Qs...)) {
+    systems.push_back(
+        std::make_unique<System<Qs...>>(std::function(cb_ptr)));
   }
 
   template <typename R> void addResource(R resource) {
     if (getResource<R>() != nullptr) {
       return;
     }
-    resources.push_back(new Resource(std::move(resource)));
+    resources.push_back(std::make_unique<Resource<R>>(std::move(resource)));
   }
 
   template <typename R> class ResourceQuery : public Query {
 
   public:
-    ResourceQuery() {
-      init();
-    }
+    ResourceQuery() { init(); }
 
     void init() override { resource = ECS::get()->getResource<R>()->get(); }
 
@@ -191,13 +190,13 @@ public:
 
   template <class M, typename... Args> void enableModule(Args... args) {
     if (!isModuleEnabled<M>()) {
-      enabled_modules.push_back(new M(args...));
+      enabled_modules.push_back(std::make_unique<M>(args...));
     }
   }
 
   template <class M> bool isModuleEnabled() {
-    for (IModule *mod : enabled_modules) {
-      if (M *_ = dynamic_cast<M *>(mod)) {
+    for (std::unique_ptr<IModule> &mod : enabled_modules) {
+      if (M *_ = dynamic_cast<M *>(mod.get())) {
         return true;
       }
     }
@@ -208,13 +207,11 @@ private:
   ECS() {};
   ~ECS() {};
 
-
-  void updateQueryCache(){
-    for (Query* query : query_cache){
+  void updateQueryCache() {
+    for (std::unique_ptr<Query> &query : query_cache) {
       query->init();
     }
   }
-
 
   template <typename... Qs> using SystemCallback = std::function<void(Qs...)>;
 
@@ -225,12 +222,12 @@ private:
   };
 
   template <class Qs> Qs getQuery() {
-    for (Query *query_ptr : query_cache) {
-      if (Qs *qs = dynamic_cast<Qs *>(query_ptr)) {
+    for (std::unique_ptr<Query> &query_ptr : query_cache) {
+      if (Qs *qs = dynamic_cast<Qs *>(query_ptr.get())) {
         return *qs;
       }
     }
-    query_cache.push_back(new Qs());
+    query_cache.push_back(std::make_unique<Qs>());
     return Qs();
   }
 
@@ -260,8 +257,8 @@ private:
   };
 
   template <typename R> Resource<R> *getResource() {
-    for (IResource *r_ptr : resources) {
-      if (Resource<R> *resource = dynamic_cast<Resource<R> *>(r_ptr)) {
+    for (std::unique_ptr<IResource> &r_ptr : resources) {
+      if (Resource<R> *resource = dynamic_cast<Resource<R> *>(r_ptr.get())) {
         return resource;
       }
     }
@@ -296,8 +293,9 @@ private:
   }
 
   template <typename C> ComponentPool<C> *getComponentPool() {
-    for (IComponentPool *pool_ptr : component_pools) {
-      if (ComponentPool<C> *pool = dynamic_cast<ComponentPool<C> *>(pool_ptr)) {
+    for (std::unique_ptr<IComponentPool> &pool_ptr : component_pools) {
+      if (ComponentPool<C> *pool =
+              dynamic_cast<ComponentPool<C> *>(pool_ptr.get())) {
         return pool;
       }
     }
@@ -309,11 +307,11 @@ private:
   std::vector<Entity> entity_deletion_queue;
   Entity entity_counter;
   std::vector<Entity> unused_entity_ids;
-  std::vector<IComponentPool *> component_pools;
-  std::vector<ISystem *> systems[128];
-  std::vector<IResource *> resources;
-  std::vector<IModule *> enabled_modules;
-  std::vector<Query *> query_cache;
+  std::vector<std::unique_ptr<IComponentPool>> component_pools;
+  std::vector<std::unique_ptr<ISystem>> systems;
+  std::vector<std::unique_ptr<IResource>> resources;
+  std::vector<std::unique_ptr<IModule>> enabled_modules;
+  std::vector<std::unique_ptr<Query>> query_cache;
   bool update_queries_flag = false;
 
   static ECS instance;

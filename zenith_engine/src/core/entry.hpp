@@ -6,10 +6,4 @@
 
 namespace Zenith{
 
-  struct GameState{
-    bool running;
-  };
-
-
-
 }

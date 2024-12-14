@@ -1,42 +1,33 @@
 #include "entry.hpp"
-#include "ecs.hpp"
 #include "../zenith.hpp"
 #include "SDL3/SDL.h"
+#include "ecs.hpp"
+#include "window.hpp"
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
-#include <cstdio>
 #include <SDL3_image/SDL_image.h>
-
+#include <cstdio>
 
 using namespace Zenith;
 
 bool running = true;
 
-
-
-void gamestateSys(ECS::ResourceQuery<GameState> querry){
-  GameState *game_state = querry.get();
-  running = game_state->running;
-}
-
-
-
-int main(){
-
+int main() {
 
   Zenith::z_main();
 
-  ECS::get()->addResource(GameState{true});
-  ECS::get()->addSystem(127, gamestateSys);
+  Window::initWindow("TEST", 600, 400);
 
+  ECS::get()->addResource(Keys());
 
-  unsigned int i = 0;
+  Keys* keys = ECS::ResourceQuery<Keys>().get();
 
-  while(running){
-    i += 1;
+  while (running) {
+
+    Window::pollEvents(&running, keys);
     ECS::get()->update();
-    /*printf("Frame %d\n", i);*/
+
+    Window::swapBuffers();
+    keys->update();
   }
-
-
 }

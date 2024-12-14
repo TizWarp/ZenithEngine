@@ -2,6 +2,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <fmt/base.h>
+#include <memory>
+#include <shared_mutex>
 
 namespace Zenith {
 
@@ -25,19 +27,17 @@ Entity ECS::createEntity() {
 }
 
 void ECS::update() {
-  if (update_queries_flag){
+  if (update_queries_flag) {
     updateQueryCache();
     update_queries_flag = false;
   }
-  for (std::vector<ISystem *> sys_vec : systems) {
-    for (ECS::ISystem *sys : sys_vec) {
-      sys->call();
-    }
+  for (std::unique_ptr<ISystem> &sys : systems) {
+    sys->call();
   }
 }
 
 void ECS::removeEntity(Entity entity) {
-  for (IComponentPool *pool : ECS::component_pools) {
+  for (std::unique_ptr<IComponentPool> &pool : ECS::component_pools) {
     pool->removeEntityComponent(entity);
   }
 }
