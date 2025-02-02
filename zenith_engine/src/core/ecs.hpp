@@ -4,7 +4,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
-#include <fmt/base.h>
 #include <functional>
 #include <memory>
 #include <shared_mutex>

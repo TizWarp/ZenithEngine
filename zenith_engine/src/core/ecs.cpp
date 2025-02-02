@@ -1,7 +1,6 @@
 #include "ecs.hpp"
 #include <cstdio>
 #include <cstdlib>
-#include <fmt/base.h>
 #include <memory>
 #include <shared_mutex>
 

@@ -1,7 +1,8 @@
 #include "entry.hpp"
 #include "../zenith.hpp"
-#include "SDL3/SDL.h"
 #include "ecs.hpp"
+#include "renderer.hpp"
+#include "spdlog/spdlog.h"
 #include "window.hpp"
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
@@ -12,11 +13,19 @@ using namespace Zenith;
 
 bool running = true;
 
+
 int main() {
 
-  Zenith::z_main();
+
+  Zenith::z_main(ECS::get());
 
   Window::initWindow("TEST", 600, 400);
+
+
+  if (!Renderer::initRenderer()){
+    return 4;
+  }
+
 
   ECS::get()->addResource(Keys());
 
@@ -26,6 +35,9 @@ int main() {
 
     Window::pollEvents(&running, keys);
     ECS::get()->update();
+
+    Renderer::beginFrame();
+    Renderer::drawFrame();
 
     Window::swapBuffers();
     keys->update();

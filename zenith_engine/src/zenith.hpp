@@ -9,7 +9,7 @@ namespace Zenith{
 
   namespace Logger = spdlog;
   namespace Math = glm;
-  extern void z_main();
+  extern void z_main(ECS*);
 
 }
 

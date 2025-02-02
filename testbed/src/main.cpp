@@ -4,4 +4,4 @@
 
 using namespace Zenith;
 
-void Zenith::z_main() { ECS *ecs = ECS::get(); }
+void Zenith::z_main(ECS* ecs) {}
