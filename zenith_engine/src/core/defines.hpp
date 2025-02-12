@@ -17,6 +17,7 @@ namespace Zenith{
 
 
   namespace Logger = spdlog;
+  namespace Math = glm;
   using namespace glm; 
 
 }

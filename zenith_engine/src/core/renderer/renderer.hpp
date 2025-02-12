@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../ecs.hpp"
+
 namespace Zenith{
   namespace Renderer{
 
@@ -8,9 +10,12 @@ namespace Zenith{
 
     void beginFrame();
 
-    void drawFrame();
+    void drawFrame(ECS* ecs);
 
     void loadTexture();
+
+
+    
 
 
   }

@@ -1,22 +1,37 @@
 #include "renderer.hpp"
 #include "../defines.hpp"
+#include "../ecs.hpp"
 #include "GL/glew.h"
 #include "shader.hpp"
 #include "spdlog/fmt/bundled/base.h"
 #include "spdlog/spdlog.h"
+#include "sprite2d.hpp"
+#include "texture.hpp"
 #include <cstdio>
-#include <iterator>
+#include <iomanip>
+#include "../ecs.hpp"
+#include "../window.hpp"
 namespace Zenith {
 
 namespace Renderer {
 
-float vertices[] = {
-    0.0f, 0.5f, 0.0f, -0.5f, -0.5f, 0.0f, 0.5f, -0.5f, 0.0f,
+void setupSpriteData();
+
+const float sprite_vertices[] = {
+  -0.75f, 0.75f, 0.0f, 1.0f, // 0
+  -0.75f, -0.75f, 0.0f, 0.0f, // 1
+  0.75f, 0.75f, 1.0f, 1.0f, // 2
+  0.75f, -0.75f, 1.0f, 0.0f, // 3
 };
 
-unsigned int VBO, VAO;
+const unsigned int sprite_indices[] = {
+  0, 1, 3,
+  0, 2, 3,
+};
 
-Shader shader;
+unsigned int SpriteVBO, SpriteVAO, SpriteEBO;
+
+Shader spriteShader;
 
 bool initRenderer() {
   glewExperimental = true;
@@ -26,34 +41,62 @@ bool initRenderer() {
     return false;
   }
 
-  glGenVertexArrays(1, &VAO);
-  glGenBuffers(1, &VBO);
 
-  glBindVertexArray(VAO);
-  glBindBuffer(GL_ARRAY_BUFFER, VBO);
+  ECS::get()->registerComponent<Texture2D>();
+  ECS::get()->registerComponent<Sprite2D>();
 
-  glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-  glEnableVertexAttribArray(0);
-
-  shader = Shader("/home/tizwarp/Projects/zenithEngine/zenith_engine/assets/"
-                  "shaders/basic.vs",
-                  "/home/tizwarp/Projects/zenithEngine/zenith_engine/assets/"
-                  "shaders/basic.fs");
-
-  shader.use();
+  setupSpriteData();
 
   return true;
 }
 
 void beginFrame() {
-  glClearColor(1.0f, 0.0f, 0.0f, 1.0f);
+  glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  int width, height;
+  Window::getSize(&width, &height);
+  glViewport(0, 0, width, height);
 }
 
-void drawFrame() { glDrawArrays(GL_TRIANGLES, 0, 3); }
 
+void drawFrame(ECS *ecs) {
+  spriteShader.use();
+  ECS::ComponentQuery<Sprite2D> query = ecs->getQuery<ECS::ComponentQuery<Sprite2D>>();
+
+
+  for (auto t : query.components){
+    Sprite2D *sprite = t.get<0>();
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, sprite->texture);
+    glBindVertexArray(SpriteVAO);
+    spriteShader.setInt("texture1" , 0);
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+  }
+}
+
+
+void setupSpriteData(){
+
+  spriteShader = Shader("./zenith_engine/assets/shaders/sprite2d.vs", "./zenith_engine/assets/shaders/sprite2d.fs");
+
+  glGenVertexArrays(1, &SpriteVAO);
+  glGenBuffers(1, &SpriteVBO);
+  glGenBuffers(1, &SpriteEBO);
+
+  glBindVertexArray(SpriteVAO);
+  glBindBuffer(GL_ARRAY_BUFFER, SpriteVBO);
+  glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, SpriteEBO);
+
+  glBufferData(GL_ARRAY_BUFFER, sizeof(sprite_vertices), sprite_vertices, GL_STATIC_DRAW);
+  glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(sprite_indices), sprite_indices, GL_STATIC_DRAW);
+
+  glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
+  glEnableVertexAttribArray(0);
+
+  glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(2*sizeof(float)));
+  glEnableVertexAttribArray(1);
+}
 
 } // namespace Renderer
 } // namespace Zenith

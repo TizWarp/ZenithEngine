@@ -1,13 +1,16 @@
 #include "entry.hpp"
 #include "../zenith.hpp"
 #include "ecs.hpp"
-#include "renderer.hpp"
-#include "spdlog/spdlog.h"
+#include "glm/fwd.hpp"
+#include "renderer/renderer.hpp"
 #include "window.hpp"
 #include <SDL3/SDL_init.h>
 #include <SDL3/SDL_video.h>
 #include <SDL3_image/SDL_image.h>
 #include <cstdio>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 
 using namespace Zenith;
 
@@ -17,7 +20,6 @@ bool running = true;
 int main() {
 
 
-  Zenith::z_main(ECS::get());
 
   Window::initWindow("TEST", 600, 400);
 
@@ -28,8 +30,11 @@ int main() {
 
 
   ECS::get()->addResource(Keys());
+  ECS::get()->registerComponent<Math::vec2>();
 
   Keys* keys = ECS::ResourceQuery<Keys>().get();
+
+  Zenith::z_main(ECS::get());
 
   while (running) {
 
@@ -37,7 +42,7 @@ int main() {
     ECS::get()->update();
 
     Renderer::beginFrame();
-    Renderer::drawFrame();
+    Renderer::drawFrame(ECS::get());
 
     Window::swapBuffers();
     keys->update();

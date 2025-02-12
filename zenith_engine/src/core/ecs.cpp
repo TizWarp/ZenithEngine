@@ -21,7 +21,6 @@ Entity ECS::createEntity() {
     Entity new_entity = unused_entity_ids[unused_entity_ids.size() - 1];
     unused_entity_ids.pop_back();
   }
-  /*printf("Creating new entity %zu", new_entity);*/
   return new_entity;
 }
 

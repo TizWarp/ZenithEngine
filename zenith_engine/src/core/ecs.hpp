@@ -154,8 +154,7 @@ public:
   };
 
   template <typename... Qs> void addSystem(void (*cb_ptr)(Qs...)) {
-    systems.push_back(
-        std::make_unique<System<Qs...>>(std::function(cb_ptr)));
+    systems.push_back(std::make_unique<System<Qs...>>(std::function(cb_ptr)));
   }
 
   template <typename R> void addResource(R resource) {
@@ -182,24 +181,14 @@ public:
 
   void runStartupSystems();
 
-  class IModule {
-  public:
-    virtual ~IModule() {};
-  };
-
-  template <class M, typename... Args> void enableModule(Args... args) {
-    if (!isModuleEnabled<M>()) {
-      enabled_modules.push_back(std::make_unique<M>(args...));
-    }
-  }
-
-  template <class M> bool isModuleEnabled() {
-    for (std::unique_ptr<IModule> &mod : enabled_modules) {
-      if (M *_ = dynamic_cast<M *>(mod.get())) {
-        return true;
+  template <class Qs> Qs getQuery() {
+    for (std::unique_ptr<Query> &query_ptr : query_cache) {
+      if (Qs *qs = dynamic_cast<Qs *>(query_ptr.get())) {
+        return *qs;
       }
     }
-    return false;
+    query_cache.push_back(std::make_unique<Qs>());
+    return Qs();
   }
 
 private:
@@ -219,16 +208,6 @@ private:
     virtual ~ISystem() {};
     virtual void call() = 0;
   };
-
-  template <class Qs> Qs getQuery() {
-    for (std::unique_ptr<Query> &query_ptr : query_cache) {
-      if (Qs *qs = dynamic_cast<Qs *>(query_ptr.get())) {
-        return *qs;
-      }
-    }
-    query_cache.push_back(std::make_unique<Qs>());
-    return Qs();
-  }
 
   template <typename... Qs> class System : public ISystem {
   public:
@@ -309,7 +288,6 @@ private:
   std::vector<std::unique_ptr<IComponentPool>> component_pools;
   std::vector<std::unique_ptr<ISystem>> systems;
   std::vector<std::unique_ptr<IResource>> resources;
-  std::vector<std::unique_ptr<IModule>> enabled_modules;
   std::vector<std::unique_ptr<Query>> query_cache;
   bool update_queries_flag = false;
 
