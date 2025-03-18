@@ -11,9 +11,12 @@
 #include <iomanip>
 #include "../ecs.hpp"
 #include "../window.hpp"
+#include "../../ecs_modules/camera.hpp"
 namespace Zenith {
-
+#include "../../zenith.hpp"
 namespace Renderer {
+
+typedef vec2 Position;
 
 void setupSpriteData();
 
@@ -62,15 +65,24 @@ void beginFrame() {
 
 void drawFrame(ECS *ecs) {
   spriteShader.use();
-  ECS::ComponentQuery<Sprite2D> query = ecs->getQuery<ECS::ComponentQuery<Sprite2D>>();
+  ECS::ComponentQuery<Sprite2D, Position> query = ecs->getQuery<ECS::ComponentQuery<Sprite2D, Position>>();
+  ECS::ComponentQuery<Camera, Position> camQuerry = ecs->getQuery<ECS::ComponentQuery<Camera, Position>>();
+
+  for (auto t : camQuerry.components){
+    Camera *cam = t.get<0>();
+    Position *pos = t.get<1>();
+    spriteShader.setVec3("camera_position", vec3(pos->x, pos->y, cam->zoom));
+  }
 
 
   for (auto t : query.components){
     Sprite2D *sprite = t.get<0>();
+    Position *pos = t.get<1>();
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, sprite->texture);
     glBindVertexArray(SpriteVAO);
     spriteShader.setInt("texture1" , 0);
+    spriteShader.setVec2("sprite_position", *pos);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
   }
 }

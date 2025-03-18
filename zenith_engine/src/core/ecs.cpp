@@ -1,4 +1,5 @@
 #include "ecs.hpp"
+#include "spdlog/spdlog.h"
 #include <cstdio>
 #include <cstdlib>
 #include <memory>

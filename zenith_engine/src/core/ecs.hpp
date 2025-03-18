@@ -1,6 +1,7 @@
 #pragma once
 
 #include "defines.hpp"
+#include "spdlog/spdlog.h"
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
@@ -213,7 +214,8 @@ private:
   public:
     System(SystemCallback<Qs...> callback) { this->callback = callback; }
 
-    void call() override { callback(ECS::get()->getQuery<Qs>()...); }
+    void call() override { 
+      callback(ECS::get()->getQuery<Qs>()...); }
 
   private:
     SystemCallback<Qs...> callback;
